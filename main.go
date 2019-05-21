@@ -45,15 +45,15 @@ func main() {
 
 		rw.Write(&of.Header{Type: of.TypeHello}, nil)
 
-		flood := &ofp.InstructionApplyActions{
-			ofp.Actions{
-				&ofp.ActionOutput{ofp.PortFlood, 0},
-			},
-		}
-
 		controller := &ofp.InstructionApplyActions{
 			ofp.Actions{
 				&ofp.ActionOutput{ofp.PortController, ofp.ContentLenMax},
+			},
+		}
+
+		flood := &ofp.InstructionApplyActions{
+			ofp.Actions{
+				&ofp.ActionOutput{ofp.PortFlood, 0},
 			},
 		}
 
@@ -125,7 +125,7 @@ func main() {
 		FlowModLearn := ofp.NewFlowMod(ofp.FlowAdd, nil)
 		FlowModLearn.Match = ofputil.ExtendedMatch(matchEthDst)
 		FlowModLearn.Instructions = ofp.Instructions{portOutput}
-		FlowModLearn.HardTimeout = 30
+		FlowModLearn.IdleTimeout = 300
 		FlowModLearn.Priority = 200
 		FlowModLearn.Table = fwdTable
 
@@ -136,7 +136,7 @@ func main() {
 		FlowModSkipPacketIn := ofp.NewFlowMod(ofp.FlowAdd, nil)
 		FlowModSkipPacketIn.Match = ofputil.ExtendedMatch(matchEthSrc)
 		FlowModSkipPacketIn.Instructions = ofp.Instructions{gotoForwardingTable}
-		FlowModSkipPacketIn.HardTimeout = 30
+		FlowModSkipPacketIn.IdleTimeout = 300
 		FlowModSkipPacketIn.Priority = 200
 		FlowModSkipPacketIn.Table = ctrlTable
 
