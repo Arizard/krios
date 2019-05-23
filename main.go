@@ -191,7 +191,7 @@ func main() {
 		flowModLearn := ofp.NewFlowMod(ofp.FlowAdd, nil)
 		flowModLearn.Match = ofputil.ExtendedMatch(matchEthDst)
 		flowModLearn.Instructions = ofp.Instructions{portOutput}
-		flowModLearn.IdleTimeout = 300
+		flowModLearn.HardTimeout = 300
 		flowModLearn.Priority = 200
 		flowModLearn.Table = fwdTable
 
