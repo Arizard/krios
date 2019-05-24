@@ -1,4 +1,4 @@
-# Krios Design Note
+# Krios
 
 ## Requirements
 
