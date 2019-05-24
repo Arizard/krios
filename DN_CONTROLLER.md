@@ -41,5 +41,4 @@
   * `ConcreteControlPlane` should handle handshakes on it's own.
 * `ConfigFile`, `ConfigRepository`, concrete `YAMLConfigRepository`
 
-
-
+![Clean Diagram](Krios-Config-Clean.jpg)
