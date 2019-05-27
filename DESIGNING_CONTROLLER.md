@@ -36,7 +36,7 @@
 ## Infrastructure
 
 * `ControlPlane`, concrete `OpenFlowControlPlane`
-  * `ConcreteControlPlane` implements `ControlPlane`
+  * `ConcreteControlPlane` is a `ControlPlane`
   * `ConcreteControlPlane` receives `ControllerSession` as an injected dependency.
   * `ConcreteControlPlane` should handle handshakes on it's own.
 * `ConfigFile`, `ConfigRepository`, concrete `YAMLConfigRepository`
