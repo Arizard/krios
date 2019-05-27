@@ -1,26 +1,20 @@
 package main
 
 import (
-	//bytes"
 	"flag"
-	"github.com/netrack/openflow/ofp"
-	"github.com/netrack/openflow/ofputil"
-	of "github.com/netrack/openflow"
 	"github.com/golang/glog"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
-	// "encoding/binary"
+	"arieoldman/arieoldman/krios/controller"
+	"arieoldman/arieoldman/krios/common"
+	"arieoldman/arieoldman/krios/entity"
+	"arieoldman/arieoldman/krios/infrastructure"
 )
 
-const (
-	// Packets will enter ctrlTable first
-	ctrlTable ofp.Table = ofp.Table(0)
-	fwdTable ofp.Table = ofp.Table(1)
-)
 
 func main() {
 	flag.Parse()
+	var cp infrastructure.ControlPlane
 
+<<<<<<< Updated upstream
 	helloEvent := of.TypeMatcher(of.TypeHello)
 	packetInEvent := of.TypeMatcher(of.TypePacketIn)
 	errorEvent := of.TypeMatcher(of.TypeError)
@@ -145,10 +139,26 @@ func main() {
 	})
 
 	glog.Info("Starting L2 Switch Controller.")
+=======
+	conf := entity.Config{
+		DPIDs: []common.EthAddr{
+			common.EthAddr{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
+			common.EthAddr{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
+			common.EthAddr{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x03},
+		},
+	}
 
-	of.ListenAndServe(":6633", mux)
+	ctrl := controller.Session{
+		Conf: conf,
+	}
+	ctrl.Initialise()
 
-	glog.Info("Started!")
+	cp = &infrastructure.OpenFlow13ControlPlane{}
+>>>>>>> Stashed changes
+
+	cp.Start(6633)
+
+	glog.Info("Finished.")
 
 	glog.Flush()
 }
