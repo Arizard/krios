@@ -1,14 +1,13 @@
 package main
 
 import (
-	"flag"
-	"github.com/golang/glog"
-	"arieoldman/arieoldman/krios/controller"
 	"arieoldman/arieoldman/krios/common"
+	"arieoldman/arieoldman/krios/controller"
 	"arieoldman/arieoldman/krios/entity"
 	"arieoldman/arieoldman/krios/infrastructure"
+	"flag"
+	"github.com/golang/glog"
 )
-
 
 func main() {
 	flag.Parse()
@@ -16,9 +15,9 @@ func main() {
 
 	conf := entity.Config{
 		DPIDs: []common.EthAddr{
-			common.EthAddr{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
-			common.EthAddr{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
-			common.EthAddr{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x03},
+			common.EthAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
+			common.EthAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
+			common.EthAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x03},
 		},
 	}
 

@@ -3,19 +3,19 @@ package main
 import (
 	//bytes"
 	"flag"
-	"github.com/netrack/openflow/ofp"
-	"github.com/netrack/openflow/ofputil"
-	of "github.com/netrack/openflow"
 	"github.com/golang/glog"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	of "github.com/netrack/openflow"
+	"github.com/netrack/openflow/ofp"
+	"github.com/netrack/openflow/ofputil"
 	// "encoding/binary"
 )
 
 const (
 	// Packets will enter ctrlTable first
 	ctrlTable ofp.Table = ofp.Table(0)
-	fwdTable ofp.Table = ofp.Table(1)
+	fwdTable  ofp.Table = ofp.Table(1)
 )
 
 func main() {
@@ -29,11 +29,11 @@ func main() {
 
 	mux := of.NewServeMux()
 
-	mux.HandleFunc(errorEvent, func(rw of.ResponseWriter, r *of.Request){
+	mux.HandleFunc(errorEvent, func(rw of.ResponseWriter, r *of.Request) {
 		var packet ofp.Error
 		packet.ReadFrom(r.Body)
 
-		glog.Errorln("Error:",packet.Error())
+		glog.Errorln("Error:", packet.Error())
 	})
 
 	gotoForwardingTable := &ofp.InstructionGotoTable{
@@ -58,23 +58,23 @@ func main() {
 		},
 	}
 
-	mux.HandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r * of.Request){
+	mux.HandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r *of.Request) {
 		var featuresReply ofp.SwitchFeatures
 		featuresReply.ReadFrom(r.Body)
 
 		glog.Infof("Features Reply from %s: DatapathID %x, %v\n", r.Addr, featuresReply.DatapathID, featuresReply)
 
 		matchEverything := ofp.XM{
-			Class:	ofp.XMClassOpenflowBasic,
-			Type:	ofp.XMTypeEthDst,
-			Value:	ofp.XMValue{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-			Mask:	ofp.XMValue{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+			Class: ofp.XMClassOpenflowBasic,
+			Type:  ofp.XMTypeEthDst,
+			Value: ofp.XMValue{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+			Mask:  ofp.XMValue{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		}
 
 		// Packets arriving at the ctrlTable will be sent to the controller and then the fwdTable.
 		flowModCtrl := ofp.NewFlowMod(ofp.FlowAdd, nil)
 		flowModCtrl.Match = ofputil.ExtendedMatch(matchEverything)
-		flowModCtrl.Instructions = ofp.Instructions{controller, gotoForwardingTable,}
+		flowModCtrl.Instructions = ofp.Instructions{controller, gotoForwardingTable}
 		flowModCtrl.HardTimeout = 0
 		flowModCtrl.Priority = 100
 		flowModCtrl.Table = ctrlTable
@@ -92,25 +92,25 @@ func main() {
 		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModCustomMiss)
 
 		// Example: block all tcp packets via port 80 using a flow mod
-		// 	Prerequisites: 
+		// 	Prerequisites:
 		//		OXM_OF_ETH_TYPE in (0x0800, 0x86dd)
 		//		OXM_OF_IP_PROTO in (0x06)
 
 		matchEthType0800 := ofp.XM{
-			Class:	ofp.XMClassOpenflowBasic,
-			Type:	ofp.XMTypeEthType,
-			Value:	ofp.XMValue{0x08, 0x00,},
+			Class: ofp.XMClassOpenflowBasic,
+			Type:  ofp.XMTypeEthType,
+			Value: ofp.XMValue{0x08, 0x00},
 		}
 
 		matchIPProto6 := ofp.XM{
-			Class:	ofp.XMClassOpenflowBasic,
-			Type:	ofp.XMTypeIPProto,
-			Value:	ofp.XMValue{0x06,},
+			Class: ofp.XMClassOpenflowBasic,
+			Type:  ofp.XMTypeIPProto,
+			Value: ofp.XMValue{0x06},
 		}
 		matchHTTP := ofp.XM{
-			Class:	ofp.XMClassOpenflowBasic,
-			Type:	ofp.XMTypeTCPDst,
-			Value:	ofp.XMValue{0x00, 0x50,}, // 80 in base 16
+			Class: ofp.XMClassOpenflowBasic,
+			Type:  ofp.XMTypeTCPDst,
+			Value: ofp.XMValue{0x00, 0x50}, // 80 in base 16
 		}
 
 		flowModBlockHTTP := ofp.NewFlowMod(ofp.FlowAdd, nil)
@@ -126,7 +126,7 @@ func main() {
 		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModBlockHTTP)
 	})
 
-	mux.HandleFunc(helloEvent, func(rw of.ResponseWriter, r *of.Request){
+	mux.HandleFunc(helloEvent, func(rw of.ResponseWriter, r *of.Request) {
 		//Send back the Hello response
 
 		glog.Infoln("Responded to", of.TypeHello, "from host", r.Addr, ".")
@@ -138,9 +138,9 @@ func main() {
 		rw.Write(&of.Header{Type: of.TypeFeaturesRequest}, nil)
 
 	})
-	
-	mux.HandleFunc(echoRequestEvent, func( rw of.ResponseWriter, r *of.Request){
-		glog.Infoln("Echo request from",r.Addr,". Replying.")
+
+	mux.HandleFunc(echoRequestEvent, func(rw of.ResponseWriter, r *of.Request) {
+		glog.Infoln("Echo request from", r.Addr, ". Replying.")
 
 		var req ofp.EchoRequest
 		req.ReadFrom(r.Body)
@@ -152,13 +152,13 @@ func main() {
 		rw.Write(&of.Header{Type: of.TypeEchoReply}, echoReply)
 	})
 
-	mux.HandleFunc(packetInEvent, func( rw of.ResponseWriter, r *of.Request){
+	mux.HandleFunc(packetInEvent, func(rw of.ResponseWriter, r *of.Request) {
 
 		glog.Infoln("PacketIn Message from host", r.Addr)
 
 		var packet ofp.PacketIn
 		packet.ReadFrom(r.Body)
-		
+
 		var ingressPort ofp.XMValue
 
 		ingressPort = packet.Match.Field(ofp.XMTypeInPort).Value
@@ -174,17 +174,17 @@ func main() {
 		packetDecode.DecodeFromBytes(packet.Data, gopacket.NilDecodeFeedback)
 
 		glog.Infof("Src MAC: %x, Dst MAC: %x", []byte(packetDecode.SrcMAC), []byte(packetDecode.DstMAC))
-		
+
 		matchEthDst := ofp.XM{
-			Class:	ofp.XMClassOpenflowBasic,
-			Type:	ofp.XMTypeEthDst,
-			Value:	ofp.XMValue(packetDecode.SrcMAC),
+			Class: ofp.XMClassOpenflowBasic,
+			Type:  ofp.XMTypeEthDst,
+			Value: ofp.XMValue(packetDecode.SrcMAC),
 		}
 
 		matchEthSrc := ofp.XM{
-			Class:	ofp.XMClassOpenflowBasic,
-			Type:	ofp.XMTypeEthSrc,
-			Value:	ofp.XMValue(packetDecode.SrcMAC),
+			Class: ofp.XMClassOpenflowBasic,
+			Type:  ofp.XMTypeEthSrc,
+			Value: ofp.XMValue(packetDecode.SrcMAC),
 		}
 
 		// Add a flow to the fwdTable which matches the packet destination to an output port.
@@ -197,7 +197,7 @@ func main() {
 
 		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModLearn)
 
-		// Add a flow to the ctrlTable which matches the packet source in order to avoid 
+		// Add a flow to the ctrlTable which matches the packet source in order to avoid
 		// sending the packet to the controller if the mapping has already been learned.
 		flowModSkipPacketIn := ofp.NewFlowMod(ofp.FlowAdd, nil)
 		flowModSkipPacketIn.Match = ofputil.ExtendedMatch(matchEthSrc)

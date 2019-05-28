@@ -1,12 +1,12 @@
 package usecase
 
 import (
-	"github.com/golang/glog"
 	"arieoldman/arieoldman/krios/common"
 	"arieoldman/arieoldman/krios/entity"
+	"github.com/golang/glog"
 )
 
-// DatapathCanHandshake is a BooleanUseCase which responds with whether the 
+// DatapathCanHandshake is a BooleanUseCase which responds with whether the
 // datapath is allowed to handshake.
 type DatapathCanHandshake struct {
 	Conf entity.Config
