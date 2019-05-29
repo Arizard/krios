@@ -26,7 +26,9 @@ func main() {
 	}
 	ctrl.Initialise()
 
-	cp = &infrastructure.OpenFlow13ControlPlane{}
+	cp = &infrastructure.OpenFlow13ControlPlane{
+		Session: ctrl,
+	}
 
 	cp.Setup()
 

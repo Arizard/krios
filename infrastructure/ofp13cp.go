@@ -12,10 +12,31 @@ import (
 	"github.com/netrack/openflow/ofputil"
 )
 
+
+type openFlowEventHook struct {
+
+}
+
 // OpenFlow13ControlPlane is an OpenFlow 1.3 control plane.
 type OpenFlow13ControlPlane struct {
 	ctrlSession controller.SessionManager
 	mux         *of.ServeMux
+
+	// TODO: Create a hooks system which allows applications to
+	// "hook" functions into an openflow event. This way multiple functions
+	// can be run by a single handler on a single mux.
+	// Needs a mapping of of.TypeMatcher to a slice of functions (possible?)
+	// When an event occurs, all of the functions mappet to the of.TypeMatcher
+	// are executed in order of when they were added.
+
+	customHandlers map[of.TypeMatcher]([]of.HandlerFunc)
+}
+
+func (cp *OpenFlow13ControlPlane) customHandleFunc(tm of.TypeMatcher, h of.HandlerFunc) {
+	if cp.customHandlers[tm] == nil {
+		cp.customHandlers[tm] = []of.HandlerFunc{}
+	}
+	cp.customHandlers[tm] = append(cp.customHandlers[tm], h)
 }
 
 const (
@@ -80,19 +101,50 @@ var (
 // Setup initialises all the stuff we need.
 func (cp *OpenFlow13ControlPlane) Setup() {
 	cp.mux = of.NewServeMux()
+	cp.customHandlers = make(map[of.TypeMatcher]([]of.HandlerFunc))
+
+	cp.mux.HandleFunc(errorEvent, func(rw of.ResponseWriter, r *of.Request) {
+		for _,h := range cp.customHandlers[errorEvent] {
+			h(rw, r)
+		}
+	})
+
+	cp.mux.HandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r *of.Request) {
+		for _,h := range cp.customHandlers[featuresReplyEvent] {
+			h(rw, r)
+		}
+	})
+
+	cp.mux.HandleFunc(helloEvent, func(rw of.ResponseWriter, r *of.Request) {
+		for _,h := range cp.customHandlers[helloEvent] {
+			h(rw, r)
+		}
+	})
+
+	cp.mux.HandleFunc(echoRequestEvent, func(rw of.ResponseWriter, r *of.Request) {
+		for _,h := range cp.customHandlers[echoRequestEvent] {
+			h(rw, r)
+		}
+	})
+
+	cp.mux.HandleFunc(packetInEvent, func(rw of.ResponseWriter, r *of.Request) {
+		for _,h := range cp.customHandlers[packetInEvent] {
+			h(rw, r)
+		}
+	})
 }
 
 // Start will start the control plane listener
 func (cp *OpenFlow13ControlPlane) Start(port uint16) {
 
-	cp.mux.HandleFunc(errorEvent, func(rw of.ResponseWriter, r *of.Request) {
+	cp.customHandleFunc(errorEvent, func(rw of.ResponseWriter, r *of.Request) {
 		var packet ofp.Error
 		packet.ReadFrom(r.Body)
 
 		glog.Errorln("Error:", packet.Error())
 	})
 
-	cp.mux.HandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r *of.Request) {
+	cp.customHandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r *of.Request) {
 		var featuresReply ofp.SwitchFeatures
 		featuresReply.ReadFrom(r.Body)
 
@@ -100,7 +152,7 @@ func (cp *OpenFlow13ControlPlane) Start(port uint16) {
 			r.Addr, featuresReply.DatapathID, featuresReply)
 	})
 
-	cp.mux.HandleFunc(helloEvent, func(rw of.ResponseWriter, r *of.Request) {
+	cp.customHandleFunc(helloEvent, func(rw of.ResponseWriter, r *of.Request) {
 		//Send back the Hello response
 
 		glog.Infoln("Responded to", of.TypeHello, "from host", r.Addr, ".")
@@ -113,7 +165,7 @@ func (cp *OpenFlow13ControlPlane) Start(port uint16) {
 
 	})
 
-	cp.mux.HandleFunc(echoRequestEvent, func(rw of.ResponseWriter, r *of.Request) {
+	cp.customHandleFunc(echoRequestEvent, func(rw of.ResponseWriter, r *of.Request) {
 		glog.Infoln("Echo request from", r.Addr, ". Replying.")
 
 		var req ofp.EchoRequest
@@ -141,7 +193,7 @@ func (cp *OpenFlow13ControlPlane) Stop() {
 func (cp *OpenFlow13ControlPlane) SetupLayer2Switching() {
 	glog.Infof("Setting up the Layer 2 Switching logic...")
 
-	cp.mux.HandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r *of.Request) {
+	cp.customHandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r *of.Request) {
 		var featuresReply ofp.SwitchFeatures
 		featuresReply.ReadFrom(r.Body)
 
@@ -183,7 +235,7 @@ func (cp *OpenFlow13ControlPlane) SetupLayer2Switching() {
 		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModBlockHTTP)
 	})
 
-	cp.mux.HandleFunc(packetInEvent, func(rw of.ResponseWriter, r *of.Request) {
+	cp.customHandleFunc(packetInEvent, func(rw of.ResponseWriter, r *of.Request) {
 		var packet ofp.PacketIn
 		packet.ReadFrom(r.Body)
 
