@@ -20,13 +20,12 @@ type OpenFlow13ControlPlane struct {
 	ctrlSession controller.SessionManager
 	mux         *of.ServeMux
 
-	// TODO: Create a hooks system which allows applications to
+	// A hooks system which allows applications to
 	// "hook" functions into an openflow event. This way multiple functions
 	// can be run by a single handler on a single mux.
-	// Needs a mapping of of.TypeMatcher to a slice of functions (possible?)
-	// When an event occurs, all of the functions mappet to the of.TypeMatcher
+	// Needs a mapping of of.TypeMatcher to a slice of functions
+	// When an event occurs, all of the functions mapped to the of.TypeMatcher
 	// are executed in order of when they were added.
-
 	customHandlers map[of.TypeMatcher]([]of.HandlerFunc)
 }
 
