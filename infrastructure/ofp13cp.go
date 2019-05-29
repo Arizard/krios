@@ -12,9 +12,7 @@ import (
 	"github.com/netrack/openflow/ofputil"
 )
 
-
 type openFlowEventHook struct {
-
 }
 
 // OpenFlow13ControlPlane is an OpenFlow 1.3 control plane.
@@ -104,31 +102,31 @@ func (cp *OpenFlow13ControlPlane) Setup() {
 	cp.customHandlers = make(map[of.TypeMatcher]([]of.HandlerFunc))
 
 	cp.mux.HandleFunc(errorEvent, func(rw of.ResponseWriter, r *of.Request) {
-		for _,h := range cp.customHandlers[errorEvent] {
+		for _, h := range cp.customHandlers[errorEvent] {
 			h(rw, r)
 		}
 	})
 
 	cp.mux.HandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r *of.Request) {
-		for _,h := range cp.customHandlers[featuresReplyEvent] {
+		for _, h := range cp.customHandlers[featuresReplyEvent] {
 			h(rw, r)
 		}
 	})
 
 	cp.mux.HandleFunc(helloEvent, func(rw of.ResponseWriter, r *of.Request) {
-		for _,h := range cp.customHandlers[helloEvent] {
+		for _, h := range cp.customHandlers[helloEvent] {
 			h(rw, r)
 		}
 	})
 
 	cp.mux.HandleFunc(echoRequestEvent, func(rw of.ResponseWriter, r *of.Request) {
-		for _,h := range cp.customHandlers[echoRequestEvent] {
+		for _, h := range cp.customHandlers[echoRequestEvent] {
 			h(rw, r)
 		}
 	})
 
 	cp.mux.HandleFunc(packetInEvent, func(rw of.ResponseWriter, r *of.Request) {
-		for _,h := range cp.customHandlers[packetInEvent] {
+		for _, h := range cp.customHandlers[packetInEvent] {
 			h(rw, r)
 		}
 	})
