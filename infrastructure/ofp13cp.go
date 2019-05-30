@@ -17,15 +17,8 @@ type openFlowEventHook struct {
 
 // OpenFlow13ControlPlane is an OpenFlow 1.3 control plane.
 type OpenFlow13ControlPlane struct {
-	ctrlSession controller.SessionManager
-	mux         *of.ServeMux
-
-	// A hooks system which allows applications to
-	// "hook" functions into an openflow event. This way multiple functions
-	// can be run by a single handler on a single mux.
-	// Needs a mapping of of.TypeMatcher to a slice of functions
-	// When an event occurs, all of the functions mapped to the of.TypeMatcher
-	// are executed in order of when they were added.
+	ctrlSession    controller.SessionManager
+	mux            *of.ServeMux
 	customHandlers map[of.TypeMatcher]([]of.HandlerFunc)
 }
 
