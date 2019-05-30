@@ -16,7 +16,6 @@
 
 ## Algorithm Overview
 
-<<<<<<< HEAD
 ### Initialisation (Hello)
 
 When a switch connects to a controller, the switch immediately sends an OpenFlow Hello message. The controller will response with a Hello Response. This is used to negotiate OpenFlow version support.
@@ -72,7 +71,6 @@ Let's add one more flow entry, on the same PacketIn event.
    1. Go to table 1
 
 Notice the **priority**? Matches are sorted by descending priority. If multiple matches are possible, the switch chooses the one with highest priority. This ensures that we will skip the flow entry that forwards packets to the switch, if the node it comes from has already been learned.
-=======
 Assume a Switch with a 4 ethernet ports (switch ports). The switch initial state has a single flow table (Table 0) and a single flow entry (table-miss).
 
 A packet arrives from **host 1** on **port 1**, destined for **host 2**. It is unknown which port **host 2** is connected on, or even if **host 2** exists.
@@ -126,4 +124,3 @@ However, this is not enough - we still need to forward the packet onwards. Since
 This results in the packet from PacketIn (using Buffer to identify the packet) being forwarded on all ports (a 'flood').
 
 The expected behaviour is that the destination node will send a response, and 
->>>>>>> dev
