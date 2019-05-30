@@ -31,12 +31,12 @@ func main() {
 
 	cp.SetupLayer2Switching()
 
-	go cp.Start(6633)
+	cp.Start(6633)
 
 	go cliLoop(100 * time.Millisecond)
 
 	for {
-
+		time.Sleep(1 * time.Second)
 	}
 
 	glog.Info("Finished.")

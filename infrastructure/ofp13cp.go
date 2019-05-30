@@ -177,7 +177,7 @@ func (cp *OpenFlow13ControlPlane) Start(port uint16) {
 
 	glog.Info("Control plane firing up engines.")
 
-	of.ListenAndServe(fmt.Sprintf(":%d", port), cp.mux)
+	go of.ListenAndServe(fmt.Sprintf(":%d", port), cp.mux)
 }
 
 // Stop will kill the control plane listener
