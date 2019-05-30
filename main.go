@@ -1,6 +1,7 @@
 package main
 
 import (
+<<<<<<< HEAD
 	//bytes"
 	"flag"
 	"github.com/netrack/openflow/ofp"
@@ -16,10 +17,21 @@ const (
 	// Packets will enter ctrlTable first
 	ctrlTable ofp.Table = ofp.Table(0)
 	fwdTable ofp.Table = ofp.Table(1)
+=======
+	// "arieoldman/arieoldman/krios/common"
+	"arieoldman/arieoldman/krios/controller"
+	"arieoldman/arieoldman/krios/entity"
+	"arieoldman/arieoldman/krios/infrastructure"
+	"flag"
+	"github.com/golang/glog"
+	"time"
+	"fmt"
+>>>>>>> dev
 )
 
 func main() {
 	flag.Parse()
+<<<<<<< HEAD
 
 	helloEvent := of.TypeMatcher(of.TypeHello)
 	packetInEvent := of.TypeMatcher(of.TypePacketIn)
@@ -218,3 +230,44 @@ func main() {
 
 	glog.Flush()
 }
+=======
+	var cp entity.ControlPlane
+
+	conf := entity.Config{
+	}
+
+	ctrl := controller.Session{
+		Conf: conf,
+	}
+	ctrl.Initialise()
+
+	cp = &infrastructure.OpenFlow13ControlPlane{
+		//Session: ctrl,
+	}
+
+	cp.Setup()
+
+	cp.SetupLayer2Switching()
+
+	cp.Start(6633)
+
+	go cliLoop(100 * time.Millisecond)
+
+	for {
+		time.Sleep(1 * time.Second)
+	}
+
+	glog.Info("Finished.")
+
+	glog.Flush()
+}
+
+func cliLoop(delay time.Duration){
+	for {
+		for _,r := range `–\|/` {
+			fmt.Printf("\r%c", r)
+			time.Sleep(delay)
+		}
+	}
+}
+>>>>>>> dev
