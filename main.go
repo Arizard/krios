@@ -6,33 +6,36 @@ import (
 	"arieoldman/arieoldman/krios/infrastructure"
 	"flag"
 	"github.com/golang/glog"
-	"time"
+	"os"
 )
+
+var flag_switch = flag.Bool("switch", false, "Enables switch mode.")
 
 func main() {
 	flag.Parse()
+	
+	var conf entity.Config
 	var cp entity.ControlPlane
+	var repRepo entity.ReportRepository
+	var ctrl controller.SessionManager
 
-	conf := entity.Config{}
+	conf = entity.Config{
+		L2Switching: *flag_switch,
+		DPIEnabled: true,
+	}
+	
+	cp = &infrastructure.OpenFlow13ControlPlane{}
 
-	ctrl := controller.Session{
+	repRepo = &infrastructure.FileReportRepository{
+		Stream: os.Stdout,
+	}
+	
+	ctrl = controller.Session{
 		Conf: conf,
+		ControlPlane: cp,
+		ReportRepository: repRepo,
 	}
 	ctrl.Initialise()
-
-	cp = &infrastructure.OpenFlow13ControlPlane{
-		//Session: ctrl,
-	}
-
-	cp.Setup()
-
-	cp.SetupLayer2Switching()
-
-	cp.Start(6633)
-
-	for {
-		time.Sleep(1 * time.Second)
-	}
 
 	glog.Info("Finished.")
 

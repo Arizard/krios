@@ -6,4 +6,6 @@ type ControlPlane interface {
 	Stop()
 	Setup()
 	SetupLayer2Switching()
+	PacketInHandler(packetBytes []byte)
+	SetupDeepPacketInspection()
 }
