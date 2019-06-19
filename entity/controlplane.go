@@ -7,5 +7,5 @@ type ControlPlane interface {
 	Setup()
 	SetupLayer2Switching()
 	PacketInHandler(packetBytes []byte)
-	SetupDeepPacketInspection()
+	SetupDeepPacketInspection(repRepo ReportRepository)
 }

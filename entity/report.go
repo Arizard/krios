@@ -16,6 +16,7 @@ type Intel struct {
 	SrcUDP    uint16
 	DstUDP    uint16
 	Size      uint16
+	Detail    string // perhaps json?
 	Timestamp int64 // nanoseconds since unix epoch
 }
 
@@ -40,6 +41,7 @@ func (rep *Report) AddIntel(
 	srcTCP uint16,
 	dstTCP uint16,
 	size uint16,
+	detail string,
 ) {
 	rep.Intels = append(rep.Intels, Intel{
 		SrcMAC: srcMAC,
@@ -49,6 +51,7 @@ func (rep *Report) AddIntel(
 		SrcTCP: srcTCP,
 		DstTCP: dstTCP,
 		Size: size,
+		Detail: detail,
 		Timestamp: time.Now().UnixNano(),
 	})
 }

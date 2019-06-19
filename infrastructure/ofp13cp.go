@@ -10,10 +10,11 @@ import (
 	of "github.com/netrack/openflow"
 	"github.com/netrack/openflow/ofp"
 	"github.com/netrack/openflow/ofputil"
-	"os"
 	"io"
 	"bytes"
-	// "net"
+	"net"
+	"encoding/binary"
+	"regexp"
 )
 
 // type openFlowEventHook struct {
@@ -95,9 +96,14 @@ var (
 		Type:  ofp.XMTypeIPProto,
 		Value: ofp.XMValue{0x06},
 	}
-	matchHTTP = ofp.XM{
+	matchHTTPDst = ofp.XM{
 		Class: ofp.XMClassOpenflowBasic,
 		Type:  ofp.XMTypeTCPDst,
+		Value: ofp.XMValue{0x00, 0x50}, // 80 in base 16
+	}
+	matchHTTPSrc = ofp.XM{
+		Class: ofp.XMClassOpenflowBasic,
+		Type:  ofp.XMTypeTCPSrc,
 		Value: ofp.XMValue{0x00, 0x50}, // 80 in base 16
 	}
 )
@@ -236,22 +242,6 @@ func (cp *OpenFlow13ControlPlane) SetupLayer2Switching() {
 
 		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModCustomMiss)
 
-		// Example: block all tcp packets via port 80 using a flow mod
-		// 	Prerequisites:
-		//		OXM_OF_ETH_TYPE in (0x0800, 0x86dd)
-		//		OXM_OF_IP_PROTO in (0x06)
-
-		flowModBlockHTTP := ofp.NewFlowMod(ofp.FlowAdd, nil)
-		flowModBlockHTTP.Match = ofputil.ExtendedMatch(
-			matchEthType0800,
-			matchIPProto6,
-			matchHTTP,
-		)
-		flowModBlockHTTP.Instructions = ofp.Instructions{dropPacket}
-		flowModBlockHTTP.Priority = 1000
-		flowModBlockHTTP.Table = ctrlTable
-
-		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModBlockHTTP)
 	})
 
 	cp.customHandleFunc(packetInEvent, func(rw of.ResponseWriter, r *of.Request) {
@@ -312,64 +302,94 @@ func (cp *OpenFlow13ControlPlane) SetupLayer2Switching() {
 // I am aware that this creates a dependency between two infrastructure components.
 
 // SetupDeepPacketInspection sets up the handlers for DPI.
-func (cp *OpenFlow13ControlPlane) SetupDeepPacketInspection() {
+func (cp *OpenFlow13ControlPlane) SetupDeepPacketInspection(repRepo entity.ReportRepository) {
 	
 	cp.customHandleFunc(featuresReplyEvent, func(rw of.ResponseWriter, r *of.Request) {
 		var featuresReply ofp.SwitchFeatures
 		featuresReply.ReadFrom(r.Body)
 
-		// We want all packets to arrive at the controller,
-		// with NO buffering - the whole packet is sent.
-		// sendController action should already use ContentLenNoBuffer
-		flowModCtrl := ofp.NewFlowMod(ofp.FlowAdd, nil)
-		flowModCtrl.Match = ofputil.ExtendedMatch(matchEverything)
-		flowModCtrl.Instructions = ofp.Instructions{sendControllerLater, gotoForwardingTable}
-		flowModCtrl.HardTimeout = 0
-		flowModCtrl.Priority = 1000
-		flowModCtrl.Table = ctrlTable
+		// // We want all packets to arrive at the controller,
+		// // with NO buffering - the whole packet is sent.
+		// // sendController action should already use ContentLenNoBuffer
+		// flowModCtrl := ofp.NewFlowMod(ofp.FlowAdd, nil)
+		// flowModCtrl.Match = ofputil.ExtendedMatch(matchEverything)
+		// flowModCtrl.Instructions = ofp.Instructions{sendControllerLater, gotoForwardingTable}
+		// flowModCtrl.HardTimeout = 0
+		// flowModCtrl.Priority = 1000
+		// flowModCtrl.Table = ctrlTable
 
-		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModCtrl)
+		// rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModCtrl)
+
+		// Example: block all tcp packets via port 80 using a flow mod
+		// 	Prerequisites:
+		//		OXM_OF_ETH_TYPE in (0x0800, 0x86dd)
+		//		OXM_OF_IP_PROTO in (0x06)
+
+		flowModHTTPToController := ofp.NewFlowMod(ofp.FlowAdd, nil)
+		flowModHTTPToController.Match = ofputil.ExtendedMatch(
+			matchEthType0800,
+			matchIPProto6,
+			matchHTTPDst,
+		)
+		flowModHTTPToController.Instructions = ofp.Instructions{sendControllerLater, gotoForwardingTable}
+		flowModHTTPToController.Priority = 1000
+		flowModHTTPToController.Table = ctrlTable
+
+		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModHTTPToController)
+
+		flowModHTTPToController2 := ofp.NewFlowMod(ofp.FlowAdd, nil)
+		flowModHTTPToController2.Match = ofputil.ExtendedMatch(
+			matchEthType0800,
+			matchIPProto6,
+			matchHTTPSrc,
+		)
+		flowModHTTPToController2.Instructions = ofp.Instructions{sendControllerLater, gotoForwardingTable}
+		flowModHTTPToController2.Priority = 1000
+		flowModHTTPToController2.Table = ctrlTable
+
+		rw.Write(&of.Header{Type: of.TypeFlowMod}, flowModHTTPToController2)
 	})
 
 	cp.customHandleFunc(packetInEvent, func(rw of.ResponseWriter, r *of.Request) {
-		var repRepo entity.ReportRepository
 		var report entity.Report
-		var stream *os.File
+		// var stream *os.File
 
-		stream = os.Stdout
+		// stream = os.Stdout
 
-		repRepo = &FileReportRepository{
-			Stream: stream,
-		}
+		// repRepo = &FileReportRepository{
+		// 	Stream: stream,
+		// }
 
 		report = entity.NewReport()
 
 		var packet ofp.PacketIn
 		packet.ReadFrom(r.Body)
 
-		// var packetDecode layers.Ethernet
-		// packetDecode.DecodeFromBytes(packet.Data, gopacket.NilDecodeFeedback)
-
-		// // var packetDecodeIP layers.IPProtocolIPv4
-		// packetDecodeIP.Decode(packet.Data, gopacket.NilDecodeFeedback)
-		
 		ethP := gopacket.NewPacket(packet.Data, layers.LayerTypeEthernet, gopacket.Default)
-		//fmt.Printf("%v", ethP.NetworkLayer().NetworkFlow().Src())
-		// fmt.Printf("SRC %x DST %x", []byte(packetDecode.SrcMAC), packetDecode.DstMAC)
 
-		if (ethP.NetworkLayer() != nil) {
-			report.AddIntel(
-				ethP.LinkLayer().LinkFlow().Src().Raw(),
-				ethP.LinkLayer().LinkFlow().Dst().Raw(),
-				ethP.NetworkLayer().NetworkFlow().Src().Raw(),
-				ethP.NetworkLayer().NetworkFlow().Dst().Raw(),
-				3567,
-				80,
-				1500,
-			)
+		// intercept all HTTP packets and save some cool info.
 
-			repRepo.Add(report)
+		if ethP.ApplicationLayer() != nil {
+			fmt.Printf("%s\n",ethP.ApplicationLayer().LayerType().String())
+			if ethP.ApplicationLayer().LayerType().String() == "Payload" {
+				// As an example, pull out all the href tags.
+				hrefs := regexp.MustCompile(`href=".+"`)
+				payload := string(ethP.ApplicationLayer().Payload())
+				matches := hrefs.FindAllString(payload, -1)		
+
+				report.AddIntel(
+					net.HardwareAddr(ethP.LinkLayer().LinkFlow().Src().Raw()),
+					net.HardwareAddr(ethP.LinkLayer().LinkFlow().Dst().Raw()),
+					ethP.NetworkLayer().NetworkFlow().Src().Raw(),
+					ethP.NetworkLayer().NetworkFlow().Dst().Raw(),
+					binary.BigEndian.Uint16(ethP.TransportLayer().TransportFlow().Src().Raw()),
+					binary.BigEndian.Uint16(ethP.TransportLayer().TransportFlow().Dst().Raw()),
+					uint16(len(ethP.Data())),
+					fmt.Sprintf("%v", matches),
+				)
+				repRepo.Add(report)
+				
+			}
 		}
-
 	})
 }

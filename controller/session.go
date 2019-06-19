@@ -26,7 +26,7 @@ func (s Session) Initialise() {
 		s.ControlPlane.SetupLayer2Switching()
 	}
 	if s.Conf.DPIEnabled {
-		s.ControlPlane.SetupDeepPacketInspection()
+		s.ControlPlane.SetupDeepPacketInspection(s.ReportRepository)
 	}
 	defer s.ControlPlane.Start(6633)
 

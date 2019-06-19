@@ -7,11 +7,14 @@ import (
 	"flag"
 	"github.com/golang/glog"
 	"os"
+	"bufio"
 )
 
 var flag_switch = flag.Bool("switch", false, "Enables switch mode.")
+var flag_dpi = flag.Bool("dpi", false, "Enables deep packet inspector.")
 
 func main() {
+	defer glog.Flush()
 	flag.Parse()
 	
 	var conf entity.Config
@@ -21,13 +24,23 @@ func main() {
 
 	conf = entity.Config{
 		L2Switching: *flag_switch,
-		DPIEnabled: true,
+		DPIEnabled: *flag_dpi,
 	}
 	
 	cp = &infrastructure.OpenFlow13ControlPlane{}
 
+	repFile, err := os.Create("report.log")
+	defer repFile.Close()
+
+	repWriter := bufio.NewWriter(repFile)
+	defer repWriter.Flush()
+
+	if err != nil {
+		panic(err)
+	}
+
 	repRepo = &infrastructure.FileReportRepository{
-		Stream: os.Stdout,
+		Stream: repFile,
 	}
 	
 	ctrl = controller.Session{
@@ -39,5 +52,5 @@ func main() {
 
 	glog.Info("Finished.")
 
-	glog.Flush()
+	
 }
