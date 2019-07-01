@@ -369,7 +369,7 @@ func (cp *OpenFlow13ControlPlane) SetupDeepPacketInspection(repRepo entity.Repor
 
 		// intercept all HTTP packets and save some cool info.
 
-		if ethP.ApplicationLayer() != nil {
+		if ethP.ApplicationLayer() != nil && ethP.TransportLayer() != nil {
 			fmt.Printf("%s\n",ethP.ApplicationLayer().LayerType().String())
 			if ethP.ApplicationLayer().LayerType().String() == "Payload" {
 				// As an example, pull out all the href tags.
